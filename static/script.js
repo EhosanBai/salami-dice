@@ -125,7 +125,6 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
     }
     
     const resetBtn = document.getElementById('reset-btn');
-    const rollBtn = document.getElementById('roll-btn');
     resetBtn.disabled = true;
     
     try {
@@ -140,16 +139,9 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
         
         if (data.success) {
             // Load fresh game state after reset
-            await loadGameState();
+            loadGameState();
             showMessage(`Reset used! New score: ${data.score}`, 'info');
             document.getElementById('dice').textContent = '🎲';
-            
-            // Check if this was the 3rd reset
-            if (data.resets_used >= 3) {
-                showMessage('3 resets used! Game is now over. You cannot reset anymore.', 'error');
-                resetBtn.disabled = true;
-                rollBtn.disabled = true;
-            }
         } else {
             showMessage(data.message || 'Reset failed', 'error');
             resetBtn.disabled = false;
@@ -215,26 +207,22 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    // Button disable logic - KEY FIX
-    // Player can roll if: they have rolls remaining AND resets used is less than 3
-    // Player can reset if: they have used less than 3 resets AND they have a score
+    // Button disable logic - CORRECT VERSION
+    // Game is over when: resets_used >= 3 AND rolls_remaining <= 0
     
-    if (gameState.resets_used >= 3) {
-        // All resets used - game is over
+    const gameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
+    
+    if (gameOver) {
+        // Game is completely over
         rollBtn.disabled = true;
         resetBtn.disabled = true;
-        showMessage('Game Over! You have used all 3 resets. No more moves allowed.', 'error');
-    } else if (gameState.game_over) {
-        // Game ended for another reason
-        rollBtn.disabled = true;
-        resetBtn.disabled = true;
-        showMessage('Game Over! No more moves allowed.', 'info');
+        showMessage('Game Over! Resets: 3/3 and Rolls: 0/2. Final Score: ' + gameState.score, 'error');
     } else {
         // Game is still active
-        // Can roll if rolls remaining > 0
+        // Can roll if rolls remaining > 0 AND not already rolling
         rollBtn.disabled = (gameState.rolls_remaining <= 0) || isRolling;
         
-        // Can reset if score > 0 and resets < 3
+        // Can reset if resets < 3 AND score > 0
         resetBtn.disabled = (gameState.resets_used >= 3) || (gameState.score <= 0);
     }
 }
