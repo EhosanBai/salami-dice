@@ -1,6 +1,5 @@
 let currentPlayer = null;
 let isRolling = false;
-let lastGameOverShown = false;
 
 const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
@@ -65,11 +64,14 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
     const dice = document.getElementById('dice');
     const rollBtn = document.getElementById('roll-btn');
     
+    // Check if rolls are remaining before rolling
+    if (rollBtn.disabled) {
+        showMessage('No more rolls available!', 'error');
+        return;
+    }
+    
     isRolling = true;
     rollBtn.disabled = true;
-    
-    // Clear any previous game over message when rolling
-    lastGameOverShown = false;
     
     dice.classList.add('rolling');
     
@@ -97,9 +99,11 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
                     const diceValue = data.dice_value || 1;
                     dice.textContent = diceFaces[diceValue - 1];
                     
+                    // Show roll success message
+                    showMessage(`You rolled a ${diceValue}!`, 'success');
+                    
                     // Load fresh game state after roll to update everything
                     loadGameState();
-                    showMessage(`You rolled a ${diceValue}!`, 'success');
                     
                     isRolling = false;
                 }, 100);
@@ -142,10 +146,12 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
         const data = await response.json();
         
         if (data.success) {
-            // Load fresh game state after reset
-            loadGameState();
+            // Show reset message with new score
             showMessage(`Reset used! New score: ${data.score}`, 'info');
             document.getElementById('dice').textContent = '🎲';
+            
+            // Load fresh game state after reset
+            loadGameState();
         } else {
             showMessage(data.message || 'Reset failed', 'error');
             resetBtn.disabled = false;
@@ -211,29 +217,21 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    // BUTTON LOGIC
-    // After 3rd reset used (resets_used >= 3): Reset button DISABLED, Roll button ENABLED (if rolls > 0)
-    // When rolls_remaining <= 0: Roll button DISABLED
-    // Game over: when resets_used >= 3 AND rolls_remaining <= 0
+    // BUTTON LOGIC - SIMPLIFIED AND CORRECT
     
-    // Disable reset button if 3 resets already used OR score is 0
+    // 1. Reset button disabled if: 3 resets used OR score is 0
     resetBtn.disabled = (gameState.resets_used >= 3) || (gameState.score <= 0);
     
-    // Disable roll button if no rolls remaining OR already rolling
+    // 2. Roll button disabled if: no rolls remaining OR currently rolling
     rollBtn.disabled = (gameState.rolls_remaining <= 0) || isRolling;
     
-    // Check if game is completely over
+    // 3. Show game over message only when both conditions are true AND not currently rolling
     const isGameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
     
-    // Only show game over message once, and only if actually game over
-    if (isGameOver && !lastGameOverShown && !isRolling) {
-        lastGameOverShown = true;
+    if (isGameOver && !isRolling) {
         rollBtn.disabled = true;
         resetBtn.disabled = true;
         showMessage('Game Over! Resets: 3/3 | Rolls: 0/2 | Final Score: ' + gameState.score, 'error');
-    } else if (!isGameOver) {
-        // Reset the flag if game is not over
-        lastGameOverShown = false;
     }
 }
 
