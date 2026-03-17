@@ -207,3 +207,6 @@ def reset_game():
 
 if __name__ == '__main__':
     app.run(debug=True)
+else:
+    # For gunicorn - expose the app instance
+    application = app  # Some WSGI servers look for 'application'
