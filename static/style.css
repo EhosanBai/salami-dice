@@ -96,6 +96,7 @@ select:focus {
     cursor: not-allowed;
     transform: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #aaa 0%, #999 100%);
 }
 
 .header {
@@ -246,6 +247,14 @@ select:focus {
 
 .btn-reset:hover:not(:disabled) {
     box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+}
+
+.btn-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #aaa 0%, #999 100%);
 }
 
 /* ============ MESSAGES ============ */
