@@ -1,5 +1,6 @@
 let currentPlayer = null;
 let isRolling = false;
+let lastGameOverShown = false;
 
 const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
@@ -66,6 +67,9 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
     
     isRolling = true;
     rollBtn.disabled = true;
+    
+    // Clear any previous game over message when rolling
+    lastGameOverShown = false;
     
     dice.classList.add('rolling');
     
@@ -195,8 +199,8 @@ function updateGameDisplay(gameState) {
     // Update resets used display
     resetsUsedDisplay.textContent = gameState.resets_used || 0;
     
-    // Update rolls remaining display
-    rollsRemainingDisplay.textContent = gameState.rolls_remaining || 0;
+    // Update rolls remaining display with /2 format
+    rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0) + '/2';
     
     // Update dice display
     if (gameState.second_roll && gameState.second_roll !== 0) {
@@ -207,7 +211,7 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    // BUTTON LOGIC - CORRECT VERSION
+    // BUTTON LOGIC
     // After 3rd reset used (resets_used >= 3): Reset button DISABLED, Roll button ENABLED (if rolls > 0)
     // When rolls_remaining <= 0: Roll button DISABLED
     // Game over: when resets_used >= 3 AND rolls_remaining <= 0
@@ -221,10 +225,15 @@ function updateGameDisplay(gameState) {
     // Check if game is completely over
     const isGameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
     
-    if (isGameOver) {
+    // Only show game over message once, and only if actually game over
+    if (isGameOver && !lastGameOverShown && !isRolling) {
+        lastGameOverShown = true;
         rollBtn.disabled = true;
         resetBtn.disabled = true;
         showMessage('Game Over! Resets: 3/3 | Rolls: 0/2 | Final Score: ' + gameState.score, 'error');
+    } else if (!isGameOver) {
+        // Reset the flag if game is not over
+        lastGameOverShown = false;
     }
 }
 
