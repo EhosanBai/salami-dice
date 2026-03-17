@@ -106,16 +106,16 @@ select:focus {
     border-left: 5px solid #667eea;
 }
 
-.header p {
-    margin: 12px 0;
-    color: #666;
-    font-size: 1.05em;
-    line-height: 1.6;
+.header h2 {
+    margin: 0 0 20px 0;
+    font-size: 1.8em;
 }
 
-.header .label {
-    font-weight: 700;
-    color: #333;
+.header p {
+    margin: 8px 0;
+    color: #666;
+    font-size: 1em;
+    line-height: 1.6;
 }
 
 /* ============ DICE CONTAINER ============ */
@@ -126,13 +126,6 @@ select:focus {
     background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 100%);
     border-radius: 15px;
     perspective: 1000px;
-}
-
-.dice-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 150px;
 }
 
 .dice {
@@ -173,16 +166,6 @@ select:focus {
     }
 }
 
-.dice-label {
-    display: block;
-    color: #667eea;
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
 /* ============ SCORE BOXES ============ */
 
 .boxes-container {
@@ -207,6 +190,7 @@ select:focus {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
+    display: block;
 }
 
 .number-box {
@@ -221,7 +205,7 @@ select:focus {
     font-weight: 800;
     color: #667eea;
     background: linear-gradient(135deg, #f8f9ff 0%, #f0f3f8 100%);
-    margin-top: 10px;
+    margin: 10px auto 0;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
     transition: all 0.3s ease;
 }
@@ -245,6 +229,8 @@ select:focus {
     }
 }
 
+/* ============ CONTROLS ============ */
+
 .controls {
     margin: 30px 0;
     display: flex;
@@ -262,25 +248,21 @@ select:focus {
     box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
 }
 
+/* ============ MESSAGES ============ */
+
 .message {
     padding: 16px 20px;
     border-radius: 10px;
     margin-top: 20px;
     font-weight: 600;
     font-size: 15px;
-    animation: slideInDown 0.3s ease-out;
     border-left: 4px solid;
+    min-height: 20px;
+    animation: slideInDown 0.3s ease-out;
 }
 
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.message:empty {
+    display: none;
 }
 
 .message.success {
@@ -299,6 +281,17 @@ select:focus {
     background: #d1ecf1;
     color: #0c5460;
     border-left-color: #17a2b8;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ============ RESPONSIVE ============ */
@@ -332,5 +325,9 @@ select:focus {
         padding: 12px 25px;
         font-size: 14px;
         min-width: 130px;
+    }
+
+    .header p {
+        font-size: 0.9em;
     }
 }
