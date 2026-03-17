@@ -93,7 +93,7 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
                     const diceValue = data.dice_value || 1;
                     dice.textContent = diceFaces[diceValue - 1];
                     
-                    // Load fresh game state after roll
+                    // Load fresh game state after roll to update everything
                     loadGameState();
                     showMessage(`You rolled a ${diceValue}!`, 'success');
                     
@@ -207,23 +207,24 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    // Button disable logic - CORRECT VERSION
-    // Game is over when: resets_used >= 3 AND rolls_remaining <= 0
+    // BUTTON LOGIC - CORRECT VERSION
+    // After 3rd reset used (resets_used >= 3): Reset button DISABLED, Roll button ENABLED (if rolls > 0)
+    // When rolls_remaining <= 0: Roll button DISABLED
+    // Game over: when resets_used >= 3 AND rolls_remaining <= 0
     
-    const gameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
+    // Disable reset button if 3 resets already used OR score is 0
+    resetBtn.disabled = (gameState.resets_used >= 3) || (gameState.score <= 0);
     
-    if (gameOver) {
-        // Game is completely over
+    // Disable roll button if no rolls remaining OR already rolling
+    rollBtn.disabled = (gameState.rolls_remaining <= 0) || isRolling;
+    
+    // Check if game is completely over
+    const isGameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
+    
+    if (isGameOver) {
         rollBtn.disabled = true;
         resetBtn.disabled = true;
-        showMessage('Game Over! Resets: 3/3 and Rolls: 0/2. Final Score: ' + gameState.score, 'error');
-    } else {
-        // Game is still active
-        // Can roll if rolls remaining > 0 AND not already rolling
-        rollBtn.disabled = (gameState.rolls_remaining <= 0) || isRolling;
-        
-        // Can reset if resets < 3 AND score > 0
-        resetBtn.disabled = (gameState.resets_used >= 3) || (gameState.score <= 0);
+        showMessage('Game Over! Resets: 3/3 | Rolls: 0/2 | Final Score: ' + gameState.score, 'error');
     }
 }
 
