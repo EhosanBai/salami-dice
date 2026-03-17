@@ -5,29 +5,11 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7c36a7ad0427fdf03a38163fb94374b2723e102369b472497eca79397482e174'
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    # Fix for Render's postgres:// vs postgresql://
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # Fallback to SQLite for local development
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dicegame.db'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dicegame.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Add these settings for better database connection handling
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 5,
-    'pool_recycle': 300,
-    'pool_pre_ping': True,
-    'connect_args': {
-        'sslmode': 'require'  # Required for Supabase
-    }
-}
-
 db = SQLAlchemy(app)
+
 # Database Models
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -207,6 +189,3 @@ def reset_game():
 
 if __name__ == '__main__':
     app.run(debug=True)
-else:
-    # For gunicorn - expose the app instance
-    application = app  # Some WSGI servers look for 'application'
