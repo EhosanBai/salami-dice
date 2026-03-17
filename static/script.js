@@ -103,14 +103,18 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
                 dice.classList.remove('rolling');
                 showMessage(data.message || 'Roll failed', 'error');
                 isRolling = false;
-                rollBtn.disabled = false;
+                
+                // Reload game state on error
+                loadGameState();
             }
         } catch (error) {
             console.error('Roll error:', error);
             dice.classList.remove('rolling');
             showMessage('Connection error. Please try again.', 'error');
             isRolling = false;
-            rollBtn.disabled = false;
+            
+            // Reload game state on error
+            loadGameState();
         }
     }, 800);
 });
@@ -121,6 +125,7 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
     }
     
     const resetBtn = document.getElementById('reset-btn');
+    const rollBtn = document.getElementById('roll-btn');
     resetBtn.disabled = true;
     
     try {
@@ -135,9 +140,16 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
         
         if (data.success) {
             // Load fresh game state after reset
-            loadGameState();
+            await loadGameState();
             showMessage(`Reset used! New score: ${data.score}`, 'info');
             document.getElementById('dice').textContent = '🎲';
+            
+            // Check if this was the 3rd reset
+            if (data.resets_used >= 3) {
+                showMessage('3 resets used! Game is now over. You cannot reset anymore.', 'error');
+                resetBtn.disabled = true;
+                rollBtn.disabled = true;
+            }
         } else {
             showMessage(data.message || 'Reset failed', 'error');
             resetBtn.disabled = false;
@@ -188,10 +200,10 @@ function updateGameDisplay(gameState) {
     // Update score display
     scoreDisplay.textContent = gameState.score || 0;
     
-    // Update resets used display - CRITICAL FIX
+    // Update resets used display
     resetsUsedDisplay.textContent = gameState.resets_used || 0;
     
-    // Update rolls remaining display - CRITICAL FIX
+    // Update rolls remaining display
     rollsRemainingDisplay.textContent = gameState.rolls_remaining || 0;
     
     // Update dice display
@@ -203,21 +215,27 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    // Disable/enable buttons based on game state
-    const canRoll = gameState.rolls_remaining > 0 && gameState.resets_used < 3 && !gameState.game_over;
-    const canReset = gameState.resets_used < 3 && gameState.score > 0;
+    // Button disable logic - KEY FIX
+    // Player can roll if: they have rolls remaining AND resets used is less than 3
+    // Player can reset if: they have used less than 3 resets AND they have a score
     
-    if (gameState.resets_used >= 3 || gameState.game_over) {
+    if (gameState.resets_used >= 3) {
+        // All resets used - game is over
         rollBtn.disabled = true;
         resetBtn.disabled = true;
-        if (gameState.resets_used >= 3) {
-            showMessage('Game Over! You have used all 3 resets.', 'error');
-        } else {
-            showMessage('Game Over! No more moves allowed.', 'info');
-        }
+        showMessage('Game Over! You have used all 3 resets. No more moves allowed.', 'error');
+    } else if (gameState.game_over) {
+        // Game ended for another reason
+        rollBtn.disabled = true;
+        resetBtn.disabled = true;
+        showMessage('Game Over! No more moves allowed.', 'info');
     } else {
-        rollBtn.disabled = !canRoll || isRolling;
-        resetBtn.disabled = !canReset;
+        // Game is still active
+        // Can roll if rolls remaining > 0
+        rollBtn.disabled = (gameState.rolls_remaining <= 0) || isRolling;
+        
+        // Can reset if score > 0 and resets < 3
+        resetBtn.disabled = (gameState.resets_used >= 3) || (gameState.score <= 0);
     }
 }
 
@@ -229,7 +247,7 @@ function showMessage(message, type) {
     setTimeout(() => {
         messageDiv.textContent = '';
         messageDiv.className = 'message';
-    }, 4000);
+    }, 5000);
 }
 
 window.addEventListener('load', async () => {
