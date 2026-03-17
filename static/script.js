@@ -7,7 +7,7 @@ document.getElementById('registration-form').addEventListener('submit', async (e
     e.preventDefault();
     
     const name = document.getElementById('name').value.trim();
-    const playerNumber = document.getElementById('player-number').value;
+    const playerNumber = document.getElementById('player-number').value.trim();
     
     if (!name || !playerNumber) {
         showMessage('Please fill in all fields', 'error');
@@ -50,6 +50,7 @@ async function loadGameState() {
         const data = await response.json();
         
         if (data.success) {
+            currentPlayer = data.player;
             updateGameDisplay(data.game_state);
         }
     } catch (error) {
@@ -95,8 +96,10 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
                     showMessage(`You rolled a ${diceValue}!`, 'success');
                     
                     isRolling = false;
-                    if (data.rolls_remaining > 0) {
+                    if (data.rolls_remaining > 0 && !data.game_over) {
                         rollBtn.disabled = false;
+                    } else {
+                        rollBtn.disabled = true;
                     }
                 }, 100);
             } else {
@@ -134,14 +137,21 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
         const data = await response.json();
         
         if (data.success) {
-            updateGameDisplay(data);
-            showMessage(`Reset used! New score: ${data.score}`, 'info');
+            loadGameState();
+            showMessage(`Reset used! New score: ${data.score}. Resets used: ${data.resets_used}/3`, 'info');
             document.getElementById('dice').textContent = '🎲';
+            
+            if (data.resets_used >= 3) {
+                document.getElementById('roll-btn').disabled = true;
+                resetBtn.disabled = true;
+                showMessage('Game Over! You have used all 3 resets.', 'error');
+            } else {
+                resetBtn.disabled = false;
+            }
         } else {
             showMessage(data.message || 'Reset failed', 'error');
+            resetBtn.disabled = false;
         }
-        
-        resetBtn.disabled = false;
     } catch (error) {
         console.error('Reset error:', error);
         showMessage('Connection error. Please try again.', 'error');
@@ -158,8 +168,9 @@ function updateGameDisplay(gameState) {
     const resetBtn = document.getElementById('reset-btn');
     const dice = document.getElementById('dice');
     
+    // Update first box
     if (gameState.first_roll && gameState.first_roll !== 0) {
-        if (firstBox.textContent !== gameState.first_roll) {
+        if (firstBox.textContent !== String(gameState.first_roll)) {
             firstBox.textContent = gameState.first_roll;
             firstBox.classList.remove('filled');
             void firstBox.offsetWidth;
@@ -170,8 +181,9 @@ function updateGameDisplay(gameState) {
         firstBox.classList.remove('filled');
     }
     
+    // Update second box
     if (gameState.second_roll && gameState.second_roll !== 0) {
-        if (secondBox.textContent !== gameState.second_roll) {
+        if (secondBox.textContent !== String(gameState.second_roll)) {
             secondBox.textContent = gameState.second_roll;
             secondBox.classList.remove('filled');
             void secondBox.offsetWidth;
@@ -182,9 +194,11 @@ function updateGameDisplay(gameState) {
         secondBox.classList.remove('filled');
     }
     
+    // Update score and resets
     scoreDisplay.textContent = gameState.score || 0;
     resetsUsedDisplay.textContent = gameState.resets_used || 0;
     
+    // Update dice display
     if (gameState.second_roll && gameState.second_roll !== 0) {
         dice.textContent = diceFaces[gameState.second_roll - 1];
     } else if (gameState.first_roll && gameState.first_roll !== 0) {
@@ -193,26 +207,29 @@ function updateGameDisplay(gameState) {
         dice.textContent = '🎲';
     }
     
-    if (gameState.game_over) {
+    // Check if game is over
+    if (gameState.game_over || gameState.resets_used >= 3) {
         rollBtn.disabled = true;
         resetBtn.disabled = true;
-        showMessage('Game Over! No more moves allowed.', 'info');
+        if (gameState.resets_used >= 3) {
+            showMessage('Game Over! You have used all 3 resets.', 'error');
+        } else {
+            showMessage('Game Over! No more moves allowed.', 'info');
+        }
     } else {
+        // Enable/disable roll button
         if (gameState.rolls_remaining > 0 && !isRolling) {
             rollBtn.disabled = false;
         } else {
             rollBtn.disabled = true;
         }
         
+        // Enable/disable reset button
         if (gameState.resets_used >= 3 || gameState.score === 0) {
             resetBtn.disabled = true;
         } else {
             resetBtn.disabled = false;
         }
-    }
-    
-    if (gameState.rolls_remaining <= 0 && !gameState.game_over) {
-        showMessage('No more rolls! Use reset or game is over.', 'info');
     }
 }
 
