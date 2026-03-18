@@ -276,13 +276,13 @@ def download_pdf():
         y_position = height - 140
         
         c.setFont("Helvetica", 14)
-        c.drawString(margin, y_position, "Hello,")
+        c.drawString(margin, y_position, "Assalamualaikum vai,")
         
         y_position -= 30
         c.drawString(margin, y_position, f"I am {name}, Roll {number}")
         
         y_position -= 40
-        c.drawString(margin, y_position, "I owe you")
+        c.drawString(margin, y_position, "Salami pabo:")
         
         y_position -= 50
         
@@ -291,12 +291,12 @@ def download_pdf():
         c.setFillColor(colors.HexColor("#4CAF50"))
         c.drawString(margin, y_position, f"{score}")
         
-        y_position -= 60
+        y_position -= 50
         
         # "taka" text
         c.setFont("Helvetica", 14)
         c.setFillColor(colors.black)
-        c.drawString(margin, y_position, "taka")
+        c.drawString(margin, y_position, "Taka")
         
         y_position -= 40
         
@@ -306,7 +306,7 @@ def download_pdf():
             c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
         except:
             c.setFont("Helvetica", 12)
-            c.drawString(margin, y_position, "Please provide payment.")
+            c.drawString(margin, y_position, "Please provide the Salami.")
         
         # Reset font and color
         c.setFillColor(colors.black)
@@ -320,7 +320,7 @@ def download_pdf():
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
-        c.drawString(margin, y_position, "Thank you, developed with love by: Team")
+        c.drawString(margin, y_position, "This is just a fun game for Unemployed kids. Nobody has to give you Salami based on the Score")
         
         # Save and close
         c.save()
