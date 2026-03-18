@@ -335,7 +335,10 @@ select:focus {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
-    gap: 9px;
+    /*gap: 9px; */
+    column-gap: 12px;
+    row-gap: 12px;
+    padding: 12px;
 }
 
 .dice-face.face-6 .dot:nth-child(1) {
