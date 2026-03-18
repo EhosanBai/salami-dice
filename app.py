@@ -295,7 +295,7 @@ def download_pdf():
         # Player message
         y_position = height - 140
         
-        c.setFont("Kalpurush", 14)
+        c.setFont("NotoSansBengaliUI", 14)
         c.drawString(margin, y_position, "আসসালামু আলাইকুম ভাই,")
         
         y_position -= 30
@@ -313,7 +313,7 @@ def download_pdf():
         
         y_position -= 50
         
-        c.setFont("Kalpurush", 14)
+        c.setFont("NotoSansBengaliUI", 14)
         c.setFillColor(colors.black)
         c.drawString(margin, y_position, "টাকা")
         
@@ -321,12 +321,12 @@ def download_pdf():
         
         # Bengali message - try with DejaVuSans if available
         try:
-            c.setFont("Kalpurush", 12)
+            c.setFont("NotoSansBengaliUI", 12)
             c.drawString(margin, y_position, "সালামি পাই।")
         except:
             # Fallback to English if Bengali font not available
-            c.setFont("Kalpurush", 12)
-            c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
+            c.setFont("NotoSansBengaliUI", 12)
+            c.drawString(margin, y_position, "অনুগ্রহ করে দিয়ে দিন।")
         
         # Reset font and color
         c.setFillColor(colors.black)
@@ -339,7 +339,7 @@ def download_pdf():
         y_position -= 30
         
         # Developer message (small text at bottom)
-        c.setFont("Kalpurush", 8)
+        c.setFont("NotoSansBengaliUI", 8)
         c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
         
         # Save and close
