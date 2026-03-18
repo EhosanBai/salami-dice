@@ -15,7 +15,6 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     player_number = db.Column(db.String(20), nullable=False)
-    ip_address = db.Column(db.String(50), unique=True, nullable=False)
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     game_state = db.relationship('GameState', backref='player', uselist=False)
 
@@ -43,18 +42,14 @@ def register():
     data = request.json
     name = data.get('name')
     player_number = data.get('playerNumber')
-    ip_address = request.remote_addr
     
-    # Check if IP already registered
-    existing_player = Player.query.filter_by(ip_address=ip_address).first()
-    if existing_player:
-        return jsonify({'success': False, 'message': 'This device has already registered!'})
+    if not name or not player_number:
+        return jsonify({'success': False, 'message': 'Name and Roll are required!'})
     
-    # Create new player
+    # Create new player - NO IP CHECK, allow unlimited registrations
     new_player = Player(
         name=name,
-        player_number=player_number,
-        ip_address=ip_address
+        player_number=player_number
     )
     db.session.add(new_player)
     db.session.flush()
@@ -64,7 +59,9 @@ def register():
     db.session.add(new_game_state)
     db.session.commit()
     
+    # Store player ID in session
     session['player_id'] = new_player.id
+    session.permanent = True
     
     return jsonify({
         'success': True, 
@@ -78,10 +75,12 @@ def register():
 
 @app.route('/get_game_state')
 def get_game_state():
-    if 'player_id' not in session:
+    player_id = session.get('player_id')
+    
+    if not player_id:
         return jsonify({'success': False, 'message': 'Not registered'})
     
-    player = Player.query.get(session['player_id'])
+    player = Player.query.get(player_id)
     if not player:
         return jsonify({'success': False, 'message': 'Player not found'})
     
@@ -103,10 +102,12 @@ def get_game_state():
 
 @app.route('/roll_dice', methods=['POST'])
 def roll_dice():
-    if 'player_id' not in session:
+    player_id = session.get('player_id')
+    
+    if not player_id:
         return jsonify({'success': False, 'message': 'Not registered'})
     
-    player = Player.query.get(session['player_id'])
+    player = Player.query.get(player_id)
     if not player:
         return jsonify({'success': False, 'message': 'Player not found'})
     
@@ -150,10 +151,12 @@ def roll_dice():
 
 @app.route('/reset_game', methods=['POST'])
 def reset_game():
-    if 'player_id' not in session:
+    player_id = session.get('player_id')
+    
+    if not player_id:
         return jsonify({'success': False, 'message': 'Not registered'})
     
-    player = Player.query.get(session['player_id'])
+    player = Player.query.get(player_id)
     if not player:
         return jsonify({'success': False, 'message': 'Player not found'})
     
@@ -175,9 +178,8 @@ def reset_game():
     game_state.second_roll = 0
     game_state.rolls_remaining = 2
     
-    # DO NOT set game_over = True here
     # Game is only over when: resets_used >= 3 AND rolls_remaining <= 0
-    # Player gets 2 more rolls after 3rd reset, then game ends if they use those rolls
+    # After reset, player gets 2 more rolls, so game is not over yet
     
     db.session.commit()
     
