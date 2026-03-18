@@ -328,6 +328,8 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const score = document.getElementById('score').textContent;
     
     try {
+        showMessage('Generating PDF...', 'info');
+        
         const response = await fetch('/download_pdf', {
             method: 'POST',
             headers: {
@@ -363,11 +365,13 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
             
             showMessage('PDF downloaded successfully!', 'success');
         } else {
-            showMessage('Failed to download PDF', 'error');
+            const errorData = await response.json();
+            console.error('Error response:', errorData);
+            showMessage(`Failed to download PDF: ${errorData.message || 'Unknown error'}`, 'error');
         }
     } catch (error) {
         console.error('Download error:', error);
-        showMessage('Error downloading PDF', 'error');
+        showMessage(`Error downloading PDF: ${error.message}`, 'error');
     }
 });
 
