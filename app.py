@@ -344,7 +344,7 @@ def download_pdf():
         y_position -= 30
         
         # Developer message (small text at bottom)
-        c.setFont("Helvetica", 8)
+        c.setFont("DejaVuSans", 8)
         c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
         
         # Save and close
