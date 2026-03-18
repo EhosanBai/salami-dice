@@ -292,16 +292,21 @@ function updateGameDisplay(gameState) {
     // 3. Show game over message only when both conditions are true AND not currently rolling
     const isGameOver = (gameState.resets_used >= 3) && (gameState.rolls_remaining <= 0);
     
+    // 4. Show download button when rolls are finished (0/2) - can download anytime after 2 rolls
+    const canDownloadPDF = (gameState.rolls_remaining <= 0);
+    
+    if (canDownloadPDF && !isRolling) {
+        // Show download button
+        document.getElementById('download-section').style.display = 'block';
+    } else {
+        // Hide download button if rolls remaining
+        document.getElementById('download-section').style.display = 'none';
+    }
+    
     if (isGameOver && !isRolling) {
         rollBtn.disabled = true;
         resetBtn.disabled = true;
         showMessage('Game Over! Resets: 3/3 | Rolls: 0/2 | Final Score: ' + gameState.score, 'error');
-        
-        // Show download button
-        document.getElementById('game-over-section').style.display = 'block';
-    } else {
-        // Hide download button if game is not over
-        document.getElementById('game-over-section').style.display = 'none';
     }
 }
 
