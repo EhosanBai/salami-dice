@@ -145,28 +145,21 @@ select:focus {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.6s ease-out;
+    transition: none;
 }
+
+/* ============ SMOOTH ROLLING ANIMATION ============ */
 
 .dice.rolling {
-    animation: rollDice 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: smoothRoll 1s linear forwards;
 }
 
-@keyframes rollDice {
+@keyframes smoothRoll {
     0% {
         transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
     }
-    25% {
-        transform: rotateX(500deg) rotateY(180deg) rotateZ(90deg);
-    }
-    50% {
-        transform: rotateX(1000deg) rotateY(360deg) rotateZ(180deg);
-    }
-    75% {
-        transform: rotateX(1500deg) rotateY(540deg) rotateZ(270deg);
-    }
     100% {
-        transform: rotateX(1800deg) rotateY(720deg) rotateZ(360deg);
+        transform: rotateX(720deg) rotateY(720deg) rotateZ(360deg);
     }
 }
 
@@ -175,15 +168,19 @@ select:focus {
     width: 120px;
     height: 120px;
     background: white;
-    border: 2px solid #667eea;
+    border: 3px solid #667eea;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 80px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    overflow: hidden;
+    font-size: 24px;
     color: #667eea;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    letter-spacing: 8px;
+    line-height: 1;
+    padding: 10px;
 }
 
 /* Face positions */
@@ -211,7 +208,7 @@ select:focus {
     transform: rotateX(-90deg) translateZ(60px);
 }
 
-/* Dice rotations to show each face */
+/* Dice rotations to show each face - INSTANT, NO TRANSITION */
 .dice.show-1 {
     transform: rotateX(0deg) rotateY(0deg);
 }
@@ -393,7 +390,8 @@ select:focus {
     .dice-face {
         width: 100px;
         height: 100px;
-        font-size: 60px;
+        font-size: 20px;
+        letter-spacing: 6px;
     }
 
     .dice-face.face-1 {
