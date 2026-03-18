@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7c36a7ad0427fdf03a38163fb94374b2723e102369b472497eca79397482e174'
@@ -230,12 +233,6 @@ def reset_game():
 @app.route('/download_pdf', methods=['POST'])
 def download_pdf():
     try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.pdfgen import canvas
-        from reportlab.lib import colors
-        from reportlab.pdfbase import pdfmetrics
-        from reportlab.pdfbase.ttfonts import TTFont
-        
         data = request.json
         name = data.get('name')
         number = data.get('number')
@@ -286,7 +283,7 @@ def download_pdf():
         c.drawString(margin, y_position, "সালামি পাই।")
         
         y_position -= 30
-        c.drawString(margin, y_position, "Please pay the due.")
+        c.drawString(margin, y_position, "অনুগ্রহ করে দিয়ে দিন।")
         
         # Reset font and color
         c.setFillColor(colors.black)
