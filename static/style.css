@@ -99,6 +99,23 @@ select:focus {
     background: linear-gradient(135deg, #aaa 0%, #999 100%);
 }
 
+.btn-reset {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.btn-reset:hover:not(:disabled) {
+    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
+}
+
+.btn-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #aaa 0%, #999 100%);
+}
+
 .header {
     background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 100%);
     padding: 25px;
@@ -145,10 +162,10 @@ select:focus {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: none;
+    /* No transition - will use animation only */
 }
 
-/* ============ SMOOTH ROLLING ANIMATION ============ */
+/* ============ SMOOTH ROLLING ANIMATION - NO STOPPING ============ */
 
 .dice.rolling {
     animation: smoothRoll 1s linear forwards;
@@ -183,54 +200,66 @@ select:focus {
     padding: 10px;
 }
 
-/* Face positions */
+/* ============ CORRECT DICE FACE POSITIONS ============ */
+/* Face 1 is front (1 dot) */
 .dice-face.face-1 {
     transform: translateZ(60px);
 }
 
+/* Face 2 is back (2 dots) */
 .dice-face.face-2 {
     transform: rotateY(180deg) translateZ(60px);
 }
 
+/* Face 3 is right (3 dots) */
 .dice-face.face-3 {
     transform: rotateY(90deg) translateZ(60px);
 }
 
+/* Face 4 is left (4 dots) */
 .dice-face.face-4 {
     transform: rotateY(-90deg) translateZ(60px);
 }
 
+/* Face 5 is top (5 dots) */
 .dice-face.face-5 {
     transform: rotateX(90deg) translateZ(60px);
 }
 
+/* Face 6 is bottom (6 dots) */
 .dice-face.face-6 {
     transform: rotateX(-90deg) translateZ(60px);
 }
 
-/* Dice rotations to show each face - INSTANT, NO TRANSITION */
+/* ============ DICE ROTATIONS TO SHOW EACH FACE ============ */
+/* Show face 1 (1 dot) - front */
 .dice.show-1 {
-    transform: rotateX(0deg) rotateY(0deg);
+    transform: rotateX(0deg) rotateY(0deg) !important;
 }
 
+/* Show face 2 (2 dots) - back */
 .dice.show-2 {
-    transform: rotateX(0deg) rotateY(180deg);
+    transform: rotateX(0deg) rotateY(180deg) !important;
 }
 
+/* Show face 3 (3 dots) - right */
 .dice.show-3 {
-    transform: rotateX(0deg) rotateY(-90deg);
+    transform: rotateX(0deg) rotateY(-90deg) !important;
 }
 
+/* Show face 4 (4 dots) - left */
 .dice.show-4 {
-    transform: rotateX(0deg) rotateY(90deg);
+    transform: rotateX(0deg) rotateY(90deg) !important;
 }
 
+/* Show face 5 (5 dots) - top */
 .dice.show-5 {
-    transform: rotateX(-90deg) rotateY(0deg);
+    transform: rotateX(-90deg) rotateY(0deg) !important;
 }
 
+/* Show face 6 (6 dots) - bottom */
 .dice.show-6 {
-    transform: rotateX(90deg) rotateY(0deg);
+    transform: rotateX(90deg) rotateY(0deg) !important;
 }
 
 /* ============ SCORE BOXES ============ */
@@ -304,23 +333,6 @@ select:focus {
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-}
-
-.btn-reset {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
-}
-
-.btn-reset:hover:not(:disabled) {
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.5);
-}
-
-.btn-reset:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: linear-gradient(135deg, #aaa 0%, #999 100%);
 }
 
 /* ============ MESSAGES ============ */
