@@ -175,18 +175,21 @@ select:focus {
     }
 }
 
+/* ============ DICE FACES WITH 3x3 GRID ============ */
+
 .dice-face {
     position: absolute;
     width: 120px;
     height: 120px;
     background: white;
     border: 3px solid #667eea;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 12px;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 4px;
+    padding: 8px;
 }
 
 .dot {
@@ -194,26 +197,27 @@ select:focus {
     height: 12px;
     background: #667eea;
     border-radius: 50%;
+    justify-self: center;
+    align-self: center;
 }
 
 /* ============ FACE 1: 1 DOT CENTER ============ */
 .dice-face.face-1 {
     transform: translateZ(60px);
-    justify-content: center;
-    align-items: center;
 }
 
 .dice-face.face-1 .dot:nth-child(1) {
-    display: block;
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.dice-face.face-1 .dot:nth-child(n+2) {
+    display: none;
 }
 
 /* ============ FACE 2: 2 DOTS DIAGONAL ============ */
 .dice-face.face-2 {
     transform: rotateY(180deg) translateZ(60px);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 9px;
 }
 
 .dice-face.face-2 .dot:nth-child(1) {
@@ -233,10 +237,6 @@ select:focus {
 /* ============ FACE 3: 3 DOTS DIAGONAL (TOP-RIGHT TO BOTTOM-LEFT) ============ */
 .dice-face.face-3 {
     transform: rotateY(90deg) translateZ(60px);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 9px;
 }
 
 .dice-face.face-3 .dot:nth-child(1) {
@@ -261,10 +261,6 @@ select:focus {
 /* ============ FACE 4: 4 DOTS ALL CORNERS ============ */
 .dice-face.face-4 {
     transform: rotateY(-90deg) translateZ(60px);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 9px;
 }
 
 .dice-face.face-4 .dot:nth-child(1) {
@@ -294,10 +290,6 @@ select:focus {
 /* ============ FACE 5: 5 DOTS (4 CORNERS + CENTER) ============ */
 .dice-face.face-5 {
     transform: rotateX(90deg) translateZ(60px);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    gap: 9px;
 }
 
 .dice-face.face-5 .dot:nth-child(1) {
@@ -332,13 +324,9 @@ select:focus {
 /* ============ FACE 6: 6 DOTS (3 LEFT, 3 RIGHT) ============ */
 .dice-face.face-6 {
     transform: rotateX(-90deg) translateZ(60px);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-    /*gap: 9px; */
-    column-gap: 12px;
-    row-gap: 12px;
-    padding: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
 }
 
 .dice-face.face-6 .dot:nth-child(1) {
@@ -483,15 +471,14 @@ select:focus {
     .container { padding: 25px; }
     h2 { font-size: 1.8em; margin-bottom: 25px; }
     .dice-wrapper { width: 100px; height: 100px; }
-    .dice-face { width: 100px; height: 100px; }
+    .dice-face { width: 100px; height: 100px; gap: 3px; padding: 6px; }
     .dot { width: 10px; height: 10px; }
-    .dice-face { gap: 6px; }
     .dice-face.face-1 { transform: translateZ(50px); }
     .dice-face.face-2 { transform: rotateY(180deg) translateZ(50px); }
     .dice-face.face-3 { transform: rotateY(90deg) translateZ(50px); }
     .dice-face.face-4 { transform: rotateY(-90deg) translateZ(50px); }
     .dice-face.face-5 { transform: rotateX(90deg) translateZ(50px); }
-    .dice-face.face-6 { transform: rotateX(-90deg) translateZ(50px); }
+    .dice-face.face-6 { transform: rotateX(-90deg) translateZ(50px); gap: 4px; }
     .number-box { width: 80px; height: 80px; font-size: 36px; }
     .boxes-container { gap: 15px; }
     .btn { padding: 12px 25px; font-size: 14px; min-width: 130px; }
