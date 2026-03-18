@@ -267,7 +267,7 @@ def download_pdf():
         
         # Title/Header
         c.setFont("Helvetica-Bold", 24)
-        c.drawString(margin, height - 80, "SALAMI 2026")
+        c.drawString(margin, height - 80, "SALAMI Lagbe 2026")
         
         # Horizontal line
         c.line(margin, height - 100, width - margin, height - 100)
@@ -282,7 +282,7 @@ def download_pdf():
         c.drawString(margin, y_position, f"I am {name}, Roll {number}")
         
         y_position -= 40
-        c.drawString(margin, y_position, "Salami pabo:")
+        c.drawString(margin, y_position, "Apnar kache Salami pabo:")
         
         y_position -= 50
         
@@ -320,7 +320,7 @@ def download_pdf():
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
-        c.drawString(margin, y_position, "This is just a fun game for Unemployed kids. Nobody has to give you Salami based on the Score")
+        c.drawString(margin, y_position, "This is just a fun game for Unemployed kids. Nobody has to give you Salami based on the Score.")
         
         # Save and close
         c.save()
