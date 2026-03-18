@@ -131,6 +131,11 @@ def roll_dice():
         game_state.score = (game_state.first_roll * 10) + game_state.second_roll
     
     game_state.rolls_remaining -= 1
+    
+    # Check if game should end: resets_used >= 3 AND rolls_remaining <= 0
+    if game_state.resets_used >= 3 and game_state.rolls_remaining <= 0:
+        game_state.game_over = True
+    
     db.session.commit()
     
     return jsonify({
@@ -170,9 +175,9 @@ def reset_game():
     game_state.second_roll = 0
     game_state.rolls_remaining = 2
     
-    # Check if game should end
-    if game_state.resets_used >= 3:
-        game_state.game_over = True
+    # DO NOT set game_over = True here
+    # Game is only over when: resets_used >= 3 AND rolls_remaining <= 0
+    # Player gets 2 more rolls after 3rd reset, then game ends if they use those rolls
     
     db.session.commit()
     
