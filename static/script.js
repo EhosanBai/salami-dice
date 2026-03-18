@@ -296,6 +296,12 @@ function updateGameDisplay(gameState) {
         rollBtn.disabled = true;
         resetBtn.disabled = true;
         showMessage('Game Over! Resets: 3/3 | Rolls: 0/2 | Final Score: ' + gameState.score, 'error');
+        
+        // Show download button
+        document.getElementById('game-over-section').style.display = 'block';
+    } else {
+        // Hide download button if game is not over
+        document.getElementById('game-over-section').style.display = 'none';
     }
 }
 
@@ -309,6 +315,56 @@ function showMessage(message, type) {
         messageDiv.className = 'message';
     }, 5000);
 }
+
+// Download PDF button handler
+document.getElementById('download-pdf-btn').addEventListener('click', async () => {
+    const playerName = document.getElementById('player-name').textContent;
+    const playerNumber = document.getElementById('player-number-display').textContent;
+    const score = document.getElementById('score').textContent;
+    
+    try {
+        const response = await fetch('/download_pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: playerName,
+                number: playerNumber,
+                score: score
+            })
+        });
+        
+        if (response.ok) {
+            // Get filename from response header
+            const contentDisposition = response.headers.get('content-disposition');
+            let filename = `${playerNumber}-${playerName}-salami2026.pdf`;
+            
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (filenameMatch) filename = filenameMatch[1];
+            }
+            
+            // Download the PDF
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            showMessage('PDF downloaded successfully!', 'success');
+        } else {
+            showMessage('Failed to download PDF', 'error');
+        }
+    } catch (error) {
+        console.error('Download error:', error);
+        showMessage('Error downloading PDF', 'error');
+    }
+});
 
 window.addEventListener('load', async () => {
     try {
