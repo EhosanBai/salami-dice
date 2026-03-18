@@ -81,12 +81,13 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
     isRolling = true;
     rollBtn.disabled = true;
     
-    // Add rolling animation
-    dice.classList.add('rolling');
-    
     // Remove all show-X classes before rolling
     dice.classList.remove('show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
     
+    // Add rolling animation
+    dice.classList.add('rolling');
+    
+    // Wait for rolling animation to complete (1 second)
     setTimeout(async () => {
         try {
             const response = await fetch('/roll_dice', {
@@ -99,23 +100,21 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
             const data = await response.json();
             
             if (data.success) {
-                setTimeout(() => {
-                    const diceValue = data.dice_value || 1;
-                    
-                    // Remove rolling animation
-                    dice.classList.remove('rolling');
-                    
-                    // Show the correct face
-                    dice.classList.add(diceRotations[diceValue]);
-                    
-                    // Show roll success message
-                    showMessage(`You rolled a ${diceValue}!`, 'success');
-                    
-                    // Load fresh game state after roll to update everything
-                    loadGameState();
-                    
-                    isRolling = false;
-                }, 100);
+                const diceValue = data.dice_value || 1;
+                
+                // Remove rolling animation
+                dice.classList.remove('rolling');
+                
+                // Show the correct face immediately after rolling stops
+                dice.classList.add(diceRotations[diceValue]);
+                
+                // Show roll success message
+                showMessage(`You rolled a ${diceValue}!`, 'success');
+                
+                // Load fresh game state after roll to update everything
+                loadGameState();
+                
+                isRolling = false;
             } else {
                 dice.classList.remove('rolling');
                 showMessage(data.message || 'Roll failed', 'error');
@@ -133,7 +132,7 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
             // Reload game state on error
             loadGameState();
         }
-    }, 800);
+    }, 1000);
 });
 
 document.getElementById('reset-btn').addEventListener('click', async () => {
