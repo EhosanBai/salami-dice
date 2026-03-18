@@ -30,7 +30,7 @@ class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     player_number = db.Column(db.String(20), nullable=False)
-    device_fingerprint = db.Column(db.String(255), nullable=False, unique=True)  # Unique per device
+    device_session_id = db.Column(db.String(255), nullable=False)  # Not unique - allows multiple per device
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     game_state = db.relationship('GameState', backref='player', uselist=False, cascade='all, delete-orphan')
 
@@ -50,13 +50,10 @@ with app.app_context():
     db.create_all()
 
 def get_device_fingerprint():
-    """Generate a unique device fingerprint based on user agent and IP"""
+    """Generate a unique session ID for this browser/tab"""
     import hashlib
-    user_agent = request.headers.get('User-Agent', 'unknown')
-    ip_address = request.remote_addr
-    fingerprint_string = f"{user_agent}_{ip_address}"
-    device_fingerprint = hashlib.sha256(fingerprint_string.encode()).hexdigest()
-    return device_fingerprint
+    # Create a truly unique ID for each registration
+    return str(uuid.uuid4())
 
 @app.route('/')
 def index():
@@ -65,7 +62,7 @@ def index():
 @app.route('/register', methods=['POST'])
 def register():
     try:
-        device_fingerprint = get_device_fingerprint()
+        device_session_id = get_device_fingerprint()  # Unique ID for THIS registration
         
         data = request.json
         name = data.get('name', '').strip()
@@ -87,19 +84,11 @@ def register():
         if len(name) < 2:
             return jsonify({'success': False, 'message': 'Name must be at least 2 characters!'})
         
-        # Check if this device already has an active account
-        existing_player = Player.query.filter_by(device_fingerprint=device_fingerprint).first()
-        if existing_player:
-            return jsonify({
-                'success': False, 
-                'message': f'This device already has an account: {existing_player.name}! Use a different device or clear your browser data.'
-            })
-        
-        # Create new player with device fingerprint
+        # Create new player with unique session ID
         new_player = Player(
             name=name,
             player_number=player_number,
-            device_fingerprint=device_fingerprint
+            device_session_id=device_session_id
         )
         db.session.add(new_player)
         db.session.flush()
@@ -109,9 +98,9 @@ def register():
         db.session.add(new_game_state)
         db.session.commit()
         
-        # Store player ID in session
+        # Store BOTH player ID and session ID in session - session ID proves this device owns this account
         session['player_id'] = new_player.id
-        session['device_fingerprint'] = device_fingerprint
+        session['device_session_id'] = device_session_id
         session.permanent = True
         
         return jsonify({
@@ -131,24 +120,19 @@ def register():
 @app.route('/get_game_state')
 def get_game_state():
     try:
-        device_fingerprint = get_device_fingerprint()
         player_id = session.get('player_id')
-        session_fingerprint = session.get('device_fingerprint')
+        device_session_id = session.get('device_session_id')
         
-        if not player_id:
+        if not player_id or not device_session_id:
             return jsonify({'success': False, 'message': 'Not registered'})
-        
-        # Verify device fingerprint matches
-        if session_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'Device mismatch. Please register from this device.'})
         
         player = Player.query.get(player_id)
         if not player or not player.game_state:
             return jsonify({'success': False, 'message': 'Player not found'})
         
-        # Double-check device fingerprint in database
-        if player.device_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'This account belongs to a different device.'})
+        # Verify the session ID matches - this proves THIS browser has the right to access this account
+        if player.device_session_id != device_session_id:
+            return jsonify({'success': False, 'message': 'Invalid session. Please register again.'})
         
         return jsonify({
             'success': True,
@@ -172,24 +156,19 @@ def get_game_state():
 @app.route('/roll_dice', methods=['POST'])
 def roll_dice():
     try:
-        device_fingerprint = get_device_fingerprint()
         player_id = session.get('player_id')
-        session_fingerprint = session.get('device_fingerprint')
+        device_session_id = session.get('device_session_id')
         
-        if not player_id:
+        if not player_id or not device_session_id:
             return jsonify({'success': False, 'message': 'Not registered'})
-        
-        # Verify device fingerprint
-        if session_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'Device mismatch. Please register from this device.'})
         
         player = Player.query.get(player_id)
         if not player or not player.game_state:
             return jsonify({'success': False, 'message': 'Player not found'})
         
-        # Double-check device fingerprint in database
-        if player.device_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'This account belongs to a different device.'})
+        # Verify session ID matches
+        if player.device_session_id != device_session_id:
+            return jsonify({'success': False, 'message': 'Invalid session. Please register again.'})
         
         game_state = player.game_state
         
@@ -236,24 +215,19 @@ def roll_dice():
 @app.route('/reset_game', methods=['POST'])
 def reset_game():
     try:
-        device_fingerprint = get_device_fingerprint()
         player_id = session.get('player_id')
-        session_fingerprint = session.get('device_fingerprint')
+        device_session_id = session.get('device_session_id')
         
-        if not player_id:
+        if not player_id or not device_session_id:
             return jsonify({'success': False, 'message': 'Not registered'})
-        
-        # Verify device fingerprint
-        if session_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'Device mismatch. Please register from this device.'})
         
         player = Player.query.get(player_id)
         if not player or not player.game_state:
             return jsonify({'success': False, 'message': 'Player not found'})
         
-        # Double-check device fingerprint in database
-        if player.device_fingerprint != device_fingerprint:
-            return jsonify({'success': False, 'message': 'This account belongs to a different device.'})
+        # Verify session ID matches
+        if player.device_session_id != device_session_id:
+            return jsonify({'success': False, 'message': 'Invalid session. Please register again.'})
         
         game_state = player.game_state
         
@@ -318,24 +292,24 @@ def download_pdf():
         # Margins
         margin = 50
         
-	    # Title/Header
+        # Title/Header
         c.setFont("Helvetica-Bold", 24)
-        c.drawString(margin, height - 80, "SALAMI Lagbe 2026")
+        c.drawString(margin, height - 80, "SALAMI 2026")
         
         # Horizontal line
         c.line(margin, height - 100, width - margin, height - 100)
         
         # Player message
-        y_position = height - 150
+        y_position = height - 140
         
         c.setFont("Helvetica", 14)
-        c.drawString(margin, y_position, "Assalamualaikum vai,")
+        c.drawString(margin, y_position, "Hello,")
         
         y_position -= 30
         c.drawString(margin, y_position, f"I am {name}, Roll {number}")
         
         y_position -= 40
-        c.drawString(margin, y_position, "Apnar kache Salami pabo:")
+        c.drawString(margin, y_position, "I owe you")
         
         y_position -= 50
         
@@ -344,12 +318,12 @@ def download_pdf():
         c.setFillColor(colors.HexColor("#4CAF50"))
         c.drawString(margin, y_position, f"{score}")
         
-        y_position -= 30
+        y_position -= 60
         
         # "taka" text
         c.setFont("Helvetica", 14)
         c.setFillColor(colors.black)
-        c.drawString(margin, y_position, "Taka")
+        c.drawString(margin, y_position, "taka")
         
         y_position -= 40
         
@@ -359,7 +333,11 @@ def download_pdf():
             c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
         except:
             c.setFont("Helvetica", 12)
-            c.drawString(margin, y_position, "Please provide the Salami.")
+            c.drawString(margin, y_position, "Please provide payment.")
+        
+        y_position -= 30
+        c.setFont("Helvetica", 14)
+        c.drawString(margin, y_position, "Please pay the due.")
         
         # Reset font and color
         c.setFillColor(colors.black)
@@ -369,11 +347,11 @@ def download_pdf():
         # Horizontal line before developer message
         c.line(margin, y_position, width - margin, y_position)
         
-        y_position -= 20
+        y_position -= 30
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
-        c.drawString(margin, y_position, "This is just a fun game for Unemployed kids. Nobody has to give you Salami based on the Score.")
+        c.drawString(margin, y_position, "Thank you, developed with love by: Team")
         
         # Save and close
         c.save()
