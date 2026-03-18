@@ -7,6 +7,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '7c36a7ad0427fdf03a38163fb94374b2723e102369b472497eca79397482e174'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///dicegame.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 30  # 30 days
 
 db = SQLAlchemy(app)
 
@@ -16,7 +19,7 @@ class Player(db.Model):
     name = db.Column(db.String(100), nullable=False)
     player_number = db.Column(db.String(20), nullable=False)
     registration_date = db.Column(db.DateTime, default=datetime.utcnow)
-    game_state = db.relationship('GameState', backref='player', uselist=False)
+    game_state = db.relationship('GameState', backref='player', uselist=False, cascade='all, delete-orphan')
 
 class GameState(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,160 +42,182 @@ def index():
 
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    name = data.get('name')
-    player_number = data.get('playerNumber')
-    
-    if not name or not player_number:
-        return jsonify({'success': False, 'message': 'Name and Roll are required!'})
-    
-    # Create new player - NO IP CHECK, allow unlimited registrations
-    new_player = Player(
-        name=name,
-        player_number=player_number
-    )
-    db.session.add(new_player)
-    db.session.flush()
-    
-    # Create game state for player
-    new_game_state = GameState(player_id=new_player.id)
-    db.session.add(new_game_state)
-    db.session.commit()
-    
-    # Store player ID in session
-    session['player_id'] = new_player.id
-    session.permanent = True
-    
-    return jsonify({
-        'success': True, 
-        'message': 'Registration successful!',
-        'player': {
-            'id': new_player.id,
-            'name': new_player.name,
-            'player_number': new_player.player_number
-        }
-    })
+    try:
+        data = request.json
+        name = data.get('name', '').strip()
+        player_number = data.get('playerNumber', '').strip()
+        
+        if not name:
+            return jsonify({'success': False, 'message': 'Please enter your name!'})
+        
+        if not player_number:
+            return jsonify({'success': False, 'message': 'Please enter your roll!'})
+        
+        if len(name) < 2:
+            return jsonify({'success': False, 'message': 'Name must be at least 2 characters!'})
+        
+        # Create new player
+        new_player = Player(
+            name=name,
+            player_number=player_number
+        )
+        db.session.add(new_player)
+        db.session.flush()
+        
+        # Create game state for player
+        new_game_state = GameState(player_id=new_player.id)
+        db.session.add(new_game_state)
+        db.session.commit()
+        
+        # Store player ID in session
+        session['player_id'] = new_player.id
+        session.permanent = True
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Registration successful!',
+            'player': {
+                'id': new_player.id,
+                'name': new_player.name,
+                'player_number': new_player.player_number
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Registration error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Registration failed. Please try again.'})
 
 @app.route('/get_game_state')
 def get_game_state():
-    player_id = session.get('player_id')
-    
-    if not player_id:
-        return jsonify({'success': False, 'message': 'Not registered'})
-    
-    player = Player.query.get(player_id)
-    if not player:
-        return jsonify({'success': False, 'message': 'Player not found'})
-    
-    return jsonify({
-        'success': True,
-        'player': {
-            'name': player.name,
-            'player_number': player.player_number
-        },
-        'game_state': {
-            'first_roll': player.game_state.first_roll,
-            'second_roll': player.game_state.second_roll,
-            'score': player.game_state.score,
-            'resets_used': player.game_state.resets_used,
-            'rolls_remaining': player.game_state.rolls_remaining,
-            'game_over': player.game_state.game_over
-        }
-    })
+    try:
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'success': False, 'message': 'Not registered'})
+        
+        player = Player.query.get(player_id)
+        if not player or not player.game_state:
+            return jsonify({'success': False, 'message': 'Player not found'})
+        
+        return jsonify({
+            'success': True,
+            'player': {
+                'name': player.name,
+                'player_number': player.player_number
+            },
+            'game_state': {
+                'first_roll': player.game_state.first_roll,
+                'second_roll': player.game_state.second_roll,
+                'score': player.game_state.score,
+                'resets_used': player.game_state.resets_used,
+                'rolls_remaining': player.game_state.rolls_remaining,
+                'game_over': player.game_state.game_over
+            }
+        })
+    except Exception as e:
+        print(f"Get game state error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error loading game state'})
 
 @app.route('/roll_dice', methods=['POST'])
 def roll_dice():
-    player_id = session.get('player_id')
-    
-    if not player_id:
-        return jsonify({'success': False, 'message': 'Not registered'})
-    
-    player = Player.query.get(player_id)
-    if not player:
-        return jsonify({'success': False, 'message': 'Player not found'})
-    
-    game_state = player.game_state
-    
-    if game_state.game_over:
-        return jsonify({'success': False, 'message': 'Game is over! No more rolls allowed.'})
-    
-    if game_state.rolls_remaining <= 0:
-        return jsonify({'success': False, 'message': 'No rolls remaining!'})
-    
-    # Roll dice (1-6)
-    import random
-    dice_value = random.randint(1, 6)
-    
-    # Update appropriate roll
-    if game_state.first_roll == 0:
-        game_state.first_roll = dice_value
-    elif game_state.second_roll == 0:
-        game_state.second_roll = dice_value
-        # Calculate score when both rolls are done
-        game_state.score = (game_state.first_roll * 10) + game_state.second_roll
-    
-    game_state.rolls_remaining -= 1
-    
-    # Check if game should end: resets_used >= 3 AND rolls_remaining <= 0
-    if game_state.resets_used >= 3 and game_state.rolls_remaining <= 0:
-        game_state.game_over = True
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'dice_value': dice_value,
-        'first_roll': game_state.first_roll,
-        'second_roll': game_state.second_roll,
-        'score': game_state.score,
-        'rolls_remaining': game_state.rolls_remaining,
-        'game_over': game_state.game_over
-    })
+    try:
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'success': False, 'message': 'Not registered'})
+        
+        player = Player.query.get(player_id)
+        if not player or not player.game_state:
+            return jsonify({'success': False, 'message': 'Player not found'})
+        
+        game_state = player.game_state
+        
+        if game_state.game_over:
+            return jsonify({'success': False, 'message': 'Game is over! No more rolls allowed.'})
+        
+        if game_state.rolls_remaining <= 0:
+            return jsonify({'success': False, 'message': 'No rolls remaining!'})
+        
+        # Roll dice (1-6)
+        import random
+        dice_value = random.randint(1, 6)
+        
+        # Update appropriate roll
+        if game_state.first_roll == 0:
+            game_state.first_roll = dice_value
+        elif game_state.second_roll == 0:
+            game_state.second_roll = dice_value
+            # Calculate score when both rolls are done
+            game_state.score = (game_state.first_roll * 10) + game_state.second_roll
+        
+        game_state.rolls_remaining -= 1
+        
+        # Check if game should end: resets_used >= 3 AND rolls_remaining <= 0
+        if game_state.resets_used >= 3 and game_state.rolls_remaining <= 0:
+            game_state.game_over = True
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'dice_value': dice_value,
+            'first_roll': game_state.first_roll,
+            'second_roll': game_state.second_roll,
+            'score': game_state.score,
+            'rolls_remaining': game_state.rolls_remaining,
+            'game_over': game_state.game_over
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Roll dice error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error rolling dice'})
 
 @app.route('/reset_game', methods=['POST'])
 def reset_game():
-    player_id = session.get('player_id')
-    
-    if not player_id:
-        return jsonify({'success': False, 'message': 'Not registered'})
-    
-    player = Player.query.get(player_id)
-    if not player:
-        return jsonify({'success': False, 'message': 'Player not found'})
-    
-    game_state = player.game_state
-    
-    if game_state.game_over:
-        return jsonify({'success': False, 'message': 'Game is already over!'})
-    
-    if game_state.resets_used >= 3:
-        return jsonify({'success': False, 'message': 'No resets remaining!'})
-    
-    if game_state.score == 0:
-        return jsonify({'success': False, 'message': 'No score to reset!'})
-    
-    # Apply reset cost (5 points per reset)
-    game_state.score = max(0, game_state.score - 5)
-    game_state.resets_used += 1
-    game_state.first_roll = 0
-    game_state.second_roll = 0
-    game_state.rolls_remaining = 2
-    
-    # Game is only over when: resets_used >= 3 AND rolls_remaining <= 0
-    # After reset, player gets 2 more rolls, so game is not over yet
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'score': game_state.score,
-        'resets_used': game_state.resets_used,
-        'first_roll': game_state.first_roll,
-        'second_roll': game_state.second_roll,
-        'rolls_remaining': game_state.rolls_remaining,
-        'game_over': game_state.game_over,
-        'message': f'Reset successful! -5 points. Resets remaining: {3 - game_state.resets_used}'
-    })
+    try:
+        player_id = session.get('player_id')
+        
+        if not player_id:
+            return jsonify({'success': False, 'message': 'Not registered'})
+        
+        player = Player.query.get(player_id)
+        if not player or not player.game_state:
+            return jsonify({'success': False, 'message': 'Player not found'})
+        
+        game_state = player.game_state
+        
+        if game_state.game_over:
+            return jsonify({'success': False, 'message': 'Game is already over!'})
+        
+        if game_state.resets_used >= 3:
+            return jsonify({'success': False, 'message': 'No resets remaining!'})
+        
+        if game_state.score == 0:
+            return jsonify({'success': False, 'message': 'No score to reset!'})
+        
+        # Apply reset cost (5 points per reset)
+        game_state.score = max(0, game_state.score - 5)
+        game_state.resets_used += 1
+        game_state.first_roll = 0
+        game_state.second_roll = 0
+        game_state.rolls_remaining = 2
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'score': game_state.score,
+            'resets_used': game_state.resets_used,
+            'first_roll': game_state.first_roll,
+            'second_roll': game_state.second_roll,
+            'rolls_remaining': game_state.rolls_remaining,
+            'game_over': game_state.game_over,
+            'message': f'Reset successful! -5 points. Resets remaining: {3 - game_state.resets_used}'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Reset game error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error resetting game'})
 
 if __name__ == '__main__':
     app.run(debug=True)
