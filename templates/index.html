@@ -35,18 +35,74 @@
             <div class="dice-container">
                 <div class="dice-wrapper">
                     <div class="dice" id="dice">
-                        <!-- Face 1: 1 dot -->
-                        <div class="dice-face face-1">●</div>
-                        <!-- Face 2: 2 dots -->
-                        <div class="dice-face face-2">●●</div>
-                        <!-- Face 3: 3 dots -->
-                        <div class="dice-face face-3">●●●</div>
-                        <!-- Face 4: 4 dots -->
-                        <div class="dice-face face-4">●●●●</div>
-                        <!-- Face 5: 5 dots -->
-                        <div class="dice-face face-5">●●●●●</div>
-                        <!-- Face 6: 6 dots -->
-                        <div class="dice-face face-6">●●●●●●</div>
+                        <!-- Face 1: 1 dot in center -->
+                        <div class="dice-face face-1">
+                            <div class="dots-grid">
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot center-dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                            </div>
+                        </div>
+
+                        <!-- Face 2: 2 dots diagonal -->
+                        <div class="dice-face face-2">
+                            <div class="dots-grid">
+                                <div class="dot top-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot bottom-right"></div>
+                            </div>
+                        </div>
+
+                        <!-- Face 3: 3 dots diagonal -->
+                        <div class="dice-face face-3">
+                            <div class="dots-grid">
+                                <div class="dot top-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot center-dot"></div>
+                                <div class="dot"></div>
+                                <div class="dot bottom-right"></div>
+                            </div>
+                        </div>
+
+                        <!-- Face 4: 4 dots (2 top, 2 bottom) -->
+                        <div class="dice-face face-4">
+                            <div class="dots-grid">
+                                <div class="dot top-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot top-right"></div>
+                                <div class="dot bottom-left"></div>
+                                <div class="dot bottom-right"></div>
+                            </div>
+                        </div>
+
+                        <!-- Face 5: 5 dots (4 corners + center) -->
+                        <div class="dice-face face-5">
+                            <div class="dots-grid">
+                                <div class="dot top-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot top-right"></div>
+                                <div class="dot center-dot"></div>
+                                <div class="dot bottom-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot bottom-right"></div>
+                            </div>
+                        </div>
+
+                        <!-- Face 6: 6 dots (3 left, 3 right) -->
+                        <div class="dice-face face-6">
+                            <div class="dots-grid-six">
+                                <div class="dot top-left"></div>
+                                <div class="dot"></div>
+                                <div class="dot bottom-left"></div>
+                                <div class="dot top-right"></div>
+                                <div class="dot"></div>
+                                <div class="dot bottom-right"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
