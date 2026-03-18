@@ -243,10 +243,39 @@ def download_pdf():
         if not REPORTLAB_AVAILABLE:
             return jsonify({'success': False, 'message': 'PDF generation not available. reportlab not installed.'}), 500
         
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        import tempfile
+        
         data = request.json
         name = data.get('name')
         number = data.get('number')
         score = data.get('score')
+        
+        # Try to register a Unicode font for Bengali support
+        # Using DejaVuSans which supports Bengali characters
+        try:
+            # Check if font is already registered
+            if 'DejaVuSans' not in pdfmetrics._fonts:
+                # Try common font paths
+                font_paths = [
+                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+                    '/System/Library/Fonts/DejaVuSans.ttf',
+                    '/Windows/Fonts/DejaVuSans.ttf',
+                    'C:\\Windows\\Fonts\\DejaVuSans.ttf',
+                ]
+                
+                font_found = False
+                for font_path in font_paths:
+                    if os.path.exists(font_path):
+                        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+                        font_found = True
+                        break
+                
+                if not font_found:
+                    print("Warning: DejaVuSans font not found, using fallback")
+        except Exception as e:
+            print(f"Warning: Could not register DejaVuSans font: {e}")
         
         # Create PDF in memory
         pdf_buffer = BytesIO()
@@ -284,15 +313,24 @@ def download_pdf():
         
         y_position -= 60
         
-        # "taka" text with Bengali
+        # "taka" text - English part only (Bengali part removed due to font limitations)
         c.setFont("Helvetica", 14)
         c.setFillColor(colors.black)
-        c.drawString(margin, y_position, "taka (টাকা)")
+        c.drawString(margin, y_position, "taka")
         
         y_position -= 40
-        c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
+        
+        # Bengali message - try with DejaVuSans if available
+        try:
+            c.setFont("DejaVuSans", 12)
+            c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
+        except:
+            # Fallback to English if Bengali font not available
+            c.setFont("Helvetica", 12)
+            c.drawString(margin, y_position, "Please provide payment.")
         
         y_position -= 30
+        c.setFont("Helvetica", 14)
         c.drawString(margin, y_position, "Please pay the due.")
         
         # Reset font and color
@@ -307,7 +345,7 @@ def download_pdf():
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
-        c.drawString(margin, y_position, "Thank you, developed with love by: Team")
+        c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
         
         # Save and close
         c.save()
