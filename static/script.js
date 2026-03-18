@@ -15,10 +15,25 @@ document.getElementById('registration-form').addEventListener('submit', async (e
     e.preventDefault();
     
     const name = document.getElementById('name').value.trim();
-    const playerNumber = document.getElementById('player-number').value.trim();
     
-    if (!name || !playerNumber) {
-        showMessage('Please fill in all fields', 'error');
+    // Get all 7 digits from the input boxes
+    const digitInputs = document.querySelectorAll('.digit-input');
+    const playerNumber = Array.from(digitInputs).map(input => input.value).join('');
+    
+    if (!name) {
+        showMessage('Please enter your name', 'error');
+        return;
+    }
+    
+    // Validate all 7 digits are filled
+    if (playerNumber.length !== 7) {
+        showMessage('Please fill all 7 digits', 'error');
+        return;
+    }
+    
+    // Validate only numbers
+    if (!/^\d+$/.test(playerNumber)) {
+        showMessage('Roll must contain only numbers!', 'error');
         return;
     }
     
@@ -49,6 +64,35 @@ document.getElementById('registration-form').addEventListener('submit', async (e
     } catch (error) {
         console.error('Registration error:', error);
         showMessage('Connection error. Please try again.', 'error');
+    }
+});
+
+// Auto-focus and auto-move between digit inputs
+document.addEventListener('DOMContentLoaded', () => {
+    const digitInputs = document.querySelectorAll('.digit-input');
+    
+    digitInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            // Allow only digits
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            
+            // Auto-move to next input if digit is entered
+            if (e.target.value.length === 1 && index < digitInputs.length - 1) {
+                digitInputs[index + 1].focus();
+            }
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            // Backspace: move to previous input
+            if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                digitInputs[index - 1].focus();
+            }
+        });
+    });
+    
+    // Focus first input on page load
+    if (digitInputs.length > 0) {
+        digitInputs[0].focus();
     }
 });
 
@@ -221,8 +265,8 @@ function updateGameDisplay(gameState) {
     // Update resets used display
     resetsUsedDisplay.textContent = gameState.resets_used || 0;
     
-    // Update rolls remaining display - FIXED: only show remaining number
-    // Just the number, not "0/2/2" format
+    // Update rolls remaining display - only show remaining number
+    // The /2 is already in HTML, so just update the number
     rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0);
     
     // Update dice display to show last rolled value
