@@ -295,14 +295,14 @@ def download_pdf():
         # Player message
         y_position = height - 140
         
-        c.setFont("Helvetica", 14)
-        c.drawString(margin, y_position, "Hello,")
+        c.setFont("Kalpurush", 14)
+        c.drawString(margin, y_position, "আসসালামু আলাইকুম ভাই,")
         
         y_position -= 30
-        c.drawString(margin, y_position, f"I am {name}, Roll {number}")
+        c.drawString(margin, y_position, f"আমি {name}, রোল {number}")
         
         y_position -= 40
-        c.drawString(margin, y_position, "I owe you")
+        c.drawString(margin, y_position, "আপনার থেকে")
         
         y_position -= 50
         
@@ -311,27 +311,22 @@ def download_pdf():
         c.setFillColor(colors.HexColor("#4CAF50"))
         c.drawString(margin, y_position, f"{score}")
         
-        y_position -= 60
+        y_position -= 50
         
-        # "taka" text - English part only (Bengali part removed due to font limitations)
-        c.setFont("Helvetica", 14)
+        c.setFont("Kalpurush", 14)
         c.setFillColor(colors.black)
-        c.drawString(margin, y_position, "taka")
+        c.drawString(margin, y_position, "টাকা")
         
         y_position -= 40
         
         # Bengali message - try with DejaVuSans if available
         try:
-            c.setFont("DejaVuSans", 12)
-            c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
+            c.setFont("Kalpurush", 12)
+            c.drawString(margin, y_position, "সালামি পাই।")
         except:
             # Fallback to English if Bengali font not available
-            c.setFont("Helvetica", 12)
-            c.drawString(margin, y_position, "Please provide payment.")
-        
-        y_position -= 30
-        c.setFont("Helvetica", 14)
-        c.drawString(margin, y_position, "Please pay the due.")
+            c.setFont("Kalpurush", 12)
+            c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
         
         # Reset font and color
         c.setFillColor(colors.black)
@@ -344,7 +339,7 @@ def download_pdf():
         y_position -= 30
         
         # Developer message (small text at bottom)
-        c.setFont("DejaVuSans", 8)
+        c.setFont("Kalpurush", 8)
         c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
         
         # Save and close
