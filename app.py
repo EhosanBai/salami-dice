@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 from io import BytesIO
+import uuid
 
 # Try to import reportlab, but don't fail if not available
 try:
@@ -49,11 +50,18 @@ with app.app_context():
 
 @app.route('/')
 def index():
+    # Generate unique device ID if not exists
+    if 'device_id' not in session:
+        session['device_id'] = str(uuid.uuid4())
     return render_template('index.html')
 
 @app.route('/register', methods=['POST'])
 def register():
     try:
+        # Generate unique device ID for this session
+        if 'device_id' not in session:
+            session['device_id'] = str(uuid.uuid4())
+        
         data = request.json
         name = data.get('name', '').strip()
         player_number = data.get('playerNumber', '').strip()
@@ -74,7 +82,7 @@ def register():
         if len(name) < 2:
             return jsonify({'success': False, 'message': 'Name must be at least 2 characters!'})
         
-        # Create new player
+        # Create new player - each registration is a new account
         new_player = Player(
             name=name,
             player_number=player_number
@@ -87,7 +95,7 @@ def register():
         db.session.add(new_game_state)
         db.session.commit()
         
-        # Store player ID in session
+        # Store player ID in session - unique to this device
         session['player_id'] = new_player.id
         session.permanent = True
         
@@ -265,7 +273,7 @@ def download_pdf():
         # Margins
         margin = 50
         
-        # Title/Header
+        	       # Title/Header
         c.setFont("Helvetica-Bold", 24)
         c.drawString(margin, height - 80, "SALAMI Lagbe 2026")
         
