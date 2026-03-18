@@ -1,7 +1,15 @@
 let currentPlayer = null;
 let isRolling = false;
 
-const diceFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+// Map dice values to CSS classes for 3D rotation
+const diceRotations = {
+    1: 'show-1',
+    2: 'show-2',
+    3: 'show-3',
+    4: 'show-4',
+    5: 'show-5',
+    6: 'show-6'
+};
 
 document.getElementById('registration-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -73,16 +81,13 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
     isRolling = true;
     rollBtn.disabled = true;
     
+    // Add rolling animation
     dice.classList.add('rolling');
     
-    const rollInterval = setInterval(() => {
-        const randomFace = diceFaces[Math.floor(Math.random() * diceFaces.length)];
-        dice.textContent = randomFace;
-    }, 50);
+    // Remove all show-X classes before rolling
+    dice.classList.remove('show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
     
     setTimeout(async () => {
-        clearInterval(rollInterval);
-        
         try {
             const response = await fetch('/roll_dice', {
                 method: 'POST',
@@ -92,12 +97,16 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
             });
             
             const data = await response.json();
-            dice.classList.remove('rolling');
             
             if (data.success) {
                 setTimeout(() => {
                     const diceValue = data.dice_value || 1;
-                    dice.textContent = diceFaces[diceValue - 1];
+                    
+                    // Remove rolling animation
+                    dice.classList.remove('rolling');
+                    
+                    // Show the correct face
+                    dice.classList.add(diceRotations[diceValue]);
                     
                     // Show roll success message
                     showMessage(`You rolled a ${diceValue}!`, 'success');
@@ -148,7 +157,11 @@ document.getElementById('reset-btn').addEventListener('click', async () => {
         if (data.success) {
             // Show reset message with new score
             showMessage(`Reset used! New score: ${data.score}`, 'info');
-            document.getElementById('dice').textContent = '🎲';
+            
+            // Reset dice to default position
+            const dice = document.getElementById('dice');
+            dice.classList.remove('rolling', 'show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
+            dice.classList.add('show-1');
             
             // Load fresh game state after reset
             loadGameState();
@@ -208,13 +221,16 @@ function updateGameDisplay(gameState) {
     // Update rolls remaining display with /2 format
     rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0) + '/2';
     
-    // Update dice display
+    // Update dice display to show last rolled value
     if (gameState.second_roll && gameState.second_roll !== 0) {
-        dice.textContent = diceFaces[gameState.second_roll - 1];
+        dice.classList.remove('rolling', 'show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
+        dice.classList.add(diceRotations[gameState.second_roll]);
     } else if (gameState.first_roll && gameState.first_roll !== 0) {
-        dice.textContent = diceFaces[gameState.first_roll - 1];
+        dice.classList.remove('rolling', 'show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
+        dice.classList.add(diceRotations[gameState.first_roll]);
     } else {
-        dice.textContent = '🎲';
+        dice.classList.remove('rolling', 'show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
+        dice.classList.add('show-1');
     }
     
     // BUTTON LOGIC - SIMPLIFIED AND CORRECT
