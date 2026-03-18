@@ -273,7 +273,7 @@ def download_pdf():
         c.line(margin, height - 100, width - margin, height - 100)
         
         # Player message
-        y_position = height - 140
+        y_position = height - 150
         
         c.setFont("Helvetica", 14)
         c.drawString(margin, y_position, "Assalamualaikum vai,")
@@ -291,7 +291,7 @@ def download_pdf():
         c.setFillColor(colors.HexColor("#4CAF50"))
         c.drawString(margin, y_position, f"{score}")
         
-        y_position -= 50
+        y_position -= 30
         
         # "taka" text
         c.setFont("Helvetica", 14)
@@ -316,7 +316,7 @@ def download_pdf():
         # Horizontal line before developer message
         c.line(margin, y_position, width - margin, y_position)
         
-        y_position -= 30
+        y_position -= 20
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
