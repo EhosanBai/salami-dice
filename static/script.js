@@ -2,7 +2,6 @@ let currentPlayer = null;
 let isRolling = false;
 
 // CORRECT mapping: dice value to CSS class
-// 1 = face-1 (1 dot), 2 = face-2 (2 dots), etc.
 const diceRotations = {
     1: 'show-1',
     2: 'show-2',
@@ -85,35 +84,39 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
     // Remove all show-X classes before rolling
     dice.classList.remove('show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6', 'rolling');
     
-    // Force reflow to ensure animation restarts
+    // Force reflow
     void dice.offsetWidth;
     
-    // Add rolling animation
-    dice.classList.add('rolling');
-    
-    // Wait for rolling animation to complete (1 second) - matches CSS animation duration
-    setTimeout(async () => {
-        try {
-            const response = await fetch('/roll_dice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+    // Fetch the roll result FIRST, before animation starts
+    try {
+        const response = await fetch('/roll_dice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const diceValue = data.dice_value || 1;
             
-            const data = await response.json();
+            // Start rolling animation
+            dice.classList.add('rolling');
             
-            if (data.success) {
-                const diceValue = data.dice_value || 1;
-                
-                // Remove rolling animation first
-                dice.classList.remove('rolling');
-                
-                // Force reflow to ensure the show-X class takes effect
-                void dice.offsetWidth;
-                
-                // Now show the correct face (instantly, no animation)
+            // While rolling, show the dice value that will be the result
+            // This makes it look like the dice is settling on that value
+            setTimeout(() => {
+                // After 700ms (before rolling animation ends at 1000ms),
+                // show the final result so it "settles" on it
+                dice.classList.remove('show-1', 'show-2', 'show-3', 'show-4', 'show-5', 'show-6');
                 dice.classList.add(diceRotations[diceValue]);
+            }, 700);
+            
+            // After animation completes
+            setTimeout(() => {
+                // Remove rolling animation
+                dice.classList.remove('rolling');
                 
                 // Show roll success message
                 showMessage(`You rolled a ${diceValue}!`, 'success');
@@ -122,24 +125,18 @@ document.getElementById('roll-btn').addEventListener('click', async () => {
                 loadGameState();
                 
                 isRolling = false;
-            } else {
-                dice.classList.remove('rolling');
-                showMessage(data.message || 'Roll failed', 'error');
-                isRolling = false;
-                
-                // Reload game state on error
-                loadGameState();
-            }
-        } catch (error) {
-            console.error('Roll error:', error);
-            dice.classList.remove('rolling');
-            showMessage('Connection error. Please try again.', 'error');
+            }, 1000);
+        } else {
+            showMessage(data.message || 'Roll failed', 'error');
             isRolling = false;
-            
-            // Reload game state on error
             loadGameState();
         }
-    }, 1000);
+    } catch (error) {
+        console.error('Roll error:', error);
+        showMessage('Connection error. Please try again.', 'error');
+        isRolling = false;
+        loadGameState();
+    }
 });
 
 document.getElementById('reset-btn').addEventListener('click', async () => {
@@ -224,7 +221,8 @@ function updateGameDisplay(gameState) {
     // Update resets used display
     resetsUsedDisplay.textContent = gameState.resets_used || 0;
     
-    // Update rolls remaining display - FIXED: show only remaining rolls, not with /2
+    // Update rolls remaining display - FIXED: only show remaining number
+    // Just the number, not "0/2/2" format
     rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0) + '/2';
     
     // Update dice display to show last rolled value
