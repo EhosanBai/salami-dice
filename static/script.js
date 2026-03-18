@@ -223,7 +223,7 @@ function updateGameDisplay(gameState) {
     
     // Update rolls remaining display - FIXED: only show remaining number
     // Just the number, not "0/2/2" format
-    rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0) + '/2';
+    rollsRemainingDisplay.textContent = (gameState.rolls_remaining || 0);
     
     // Update dice display to show last rolled value
     if (gameState.second_roll && gameState.second_roll !== 0) {
