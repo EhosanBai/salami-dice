@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
+from io import BytesIO
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7c36a7ad0427fdf03a38163fb94374b2723e102369b472497eca79397482e174'
@@ -51,7 +52,14 @@ def register():
             return jsonify({'success': False, 'message': 'Please enter your name!'})
         
         if not player_number:
-            return jsonify({'success': False, 'message': 'Please enter your roll!'})
+            return jsonify({'success': False, 'message': 'Please enter your 7-digit roll!'})
+        
+        # Validate exactly 7 digits
+        if len(player_number) != 7:
+            return jsonify({'success': False, 'message': 'Roll must be exactly 7 digits!'})
+        
+        if not player_number.isdigit():
+            return jsonify({'success': False, 'message': 'Roll must contain only numbers!'})
         
         if len(name) < 2:
             return jsonify({'success': False, 'message': 'Name must be at least 2 characters!'})
@@ -218,6 +226,99 @@ def reset_game():
         db.session.rollback()
         print(f"Reset game error: {str(e)}")
         return jsonify({'success': False, 'message': 'Error resetting game'})
+
+@app.route('/download_pdf', methods=['POST'])
+def download_pdf():
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib import colors
+        
+        data = request.json
+        name = data.get('name')
+        number = data.get('number')
+        score = data.get('score')
+        
+        # Create PDF in memory
+        pdf_buffer = BytesIO()
+        c = canvas.Canvas(pdf_buffer, pagesize=letter)
+        width, height = letter
+        
+        # Margins
+        margin = 50
+        
+        # Title/Header
+        c.setFont("Helvetica-Bold", 24)
+        c.drawString(margin, height - 80, "SALAMI 2026")
+        
+        # Horizontal line
+        c.line(margin, height - 100, width - margin, height - 100)
+        
+        # Player message
+        y_position = height - 140
+        
+        c.setFont("Helvetica", 14)
+        c.drawString(margin, y_position, "আসসালামু আলাইকুম ভাই,")
+        
+        y_position -= 30
+        c.drawString(margin, y_position, f"আমি {name}, রোল {number}")
+        
+        y_position -= 40
+        c.drawString(margin, y_position, "আপনার থেকে")
+        
+        y_position -= 50
+        
+        # Score in large font with light green color
+        c.setFont("Helvetica-Bold", 48)
+        c.setFillColor(colors.HexColor("#4CAF50"))
+        c.drawString(margin, y_position, f"{score}")
+        
+        y_position -= 60
+        
+        # "taka" text
+        c.setFont("Helvetica", 14)
+        c.setFillColor(colors.black)
+        c.drawString(margin, y_position, "টাকা")
+        
+        y_position -= 30
+        c.drawString(margin, y_position, "সালামি পাই।")
+        
+        # Reset font and color
+        c.setFillColor(colors.black)
+        
+        y_position -= 100
+        
+        # Horizontal line before developer message
+        c.line(margin, y_position, width - margin, y_position)
+        
+        y_position -= 30
+        
+        # Horizontal line before developer message
+        c.line(margin, y_position, width - margin, y_position)
+        
+        y_position -= 30
+        
+        # Developer message (small text at bottom)
+        c.setFont("Helvetica", 8)
+        c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
+        
+        # Save and close
+        c.save()
+        pdf_buffer.seek(0)
+        
+        # Generate filename
+        filename = f"{number}-{name}-salami2026.pdf"
+        
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        print(f"PDF generation error: {str(e)}")
+        return jsonify({'success': False, 'message': 'Error generating PDF'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
