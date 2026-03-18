@@ -233,6 +233,8 @@ def download_pdf():
         from reportlab.lib.pagesizes import letter
         from reportlab.pdfgen import canvas
         from reportlab.lib import colors
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
         
         data = request.json
         name = data.get('name')
@@ -275,23 +277,21 @@ def download_pdf():
         
         y_position -= 60
         
-        # "taka" text
+        # "taka" text with Bengali
         c.setFont("Helvetica", 14)
         c.setFillColor(colors.black)
         c.drawString(margin, y_position, "টাকা")
         
-        y_position -= 30
+        y_position -= 40
         c.drawString(margin, y_position, "সালামি পাই।")
+        
+        y_position -= 30
+        c.drawString(margin, y_position, "Please pay the due.")
         
         # Reset font and color
         c.setFillColor(colors.black)
         
         y_position -= 100
-        
-        # Horizontal line before developer message
-        c.line(margin, y_position, width - margin, y_position)
-        
-        y_position -= 30
         
         # Horizontal line before developer message
         c.line(margin, y_position, width - margin, y_position)
@@ -318,7 +318,9 @@ def download_pdf():
         
     except Exception as e:
         print(f"PDF generation error: {str(e)}")
-        return jsonify({'success': False, 'message': 'Error generating PDF'}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Error generating PDF: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
