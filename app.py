@@ -3,9 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
+
+# Try to import reportlab, but don't fail if not available
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    print("Warning: reportlab not installed. PDF download will not work.")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '7c36a7ad0427fdf03a38163fb94374b2723e102369b472497eca79397482e174'
@@ -233,6 +240,9 @@ def reset_game():
 @app.route('/download_pdf', methods=['POST'])
 def download_pdf():
     try:
+        if not REPORTLAB_AVAILABLE:
+            return jsonify({'success': False, 'message': 'PDF generation not available. reportlab not installed.'}), 500
+        
         data = request.json
         name = data.get('name')
         number = data.get('number')
@@ -257,13 +267,13 @@ def download_pdf():
         y_position = height - 140
         
         c.setFont("Helvetica", 14)
-        c.drawString(margin, y_position, "আসসালামু আলাইকুম ভাই,")
+        c.drawString(margin, y_position, "Hello,")
         
         y_position -= 30
-        c.drawString(margin, y_position, f"আমি {name}, রোল {number}")
+        c.drawString(margin, y_position, f"I am {name}, Roll {number}")
         
         y_position -= 40
-        c.drawString(margin, y_position, "আপনার থেকে")
+        c.drawString(margin, y_position, "I owe you")
         
         y_position -= 50
         
@@ -277,13 +287,13 @@ def download_pdf():
         # "taka" text with Bengali
         c.setFont("Helvetica", 14)
         c.setFillColor(colors.black)
-        c.drawString(margin, y_position, "টাকা")
+        c.drawString(margin, y_position, "taka (টাকা)")
         
         y_position -= 40
-        c.drawString(margin, y_position, "সালামি পাই।")
+        c.drawString(margin, y_position, "অনুগ্রহ করে পেমেন্ট করুন।")
         
         y_position -= 30
-        c.drawString(margin, y_position, "অনুগ্রহ করে দিয়ে দিন।")
+        c.drawString(margin, y_position, "Please pay the due.")
         
         # Reset font and color
         c.setFillColor(colors.black)
@@ -297,7 +307,7 @@ def download_pdf():
         
         # Developer message (small text at bottom)
         c.setFont("Helvetica", 8)
-        c.drawString(margin, y_position, "এটা বেকার পোলাপানের সময় নষ্ট করার জন্য তৈরি। কেউ তোমাকে সালামি দিতে বাধ্য নয়।")
+        c.drawString(margin, y_position, "Thank you, developed with love by: Team")
         
         # Save and close
         c.save()
